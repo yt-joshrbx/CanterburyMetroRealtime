@@ -279,7 +279,7 @@
 
             map.spin(true);
             // Using GTFS Realtime Vehicle Positions endpoint
-            fetch(METROINFO_BASE_URL + '/gtfs-realtime/vehicle-positions', {
+            fetch(METROINFO_BASE_URL + '/gtfs-realtime/vehicle-positions.pb', {
                 method: 'GET',
                 headers: {
                     'x-api-key': API_KEY,
@@ -342,7 +342,7 @@
                             if (!target || !target.trip || !target.trip.trip_id) return;
                             var tripId = target.trip.trip_id;
 
-                            fetch(METROINFO_BASE_URL + '/gtfs-static/trips/' + tripId, {
+                            fetch(METROINFO_BASE_URL + '/gtfs-static/trip-updates.pb/' + tripId, {
                                 method: 'GET',
                                 headers: {
                                     'x-api-key': API_KEY,
