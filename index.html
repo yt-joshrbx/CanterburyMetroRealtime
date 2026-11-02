@@ -200,12 +200,12 @@
             worldCopyJump: true
         });
 
-        var positron = L.tileLayer.provider('CartoDB.Positron').addTo(map);
+        var positron = L.tileLayer.provider("OpenStreetMap.Mapnik").addTo(map);
 
         var baseMaps = {
-            "OSM": L.tileLayer.provider("OpenStreetMap.Mapnik"),
+            "OSM": positron,
             "OSM Grayscale": L.tileLayer.provider("OpenStreetMap.BlackAndWhite"),
-            "CartoDB Positron": positron,
+            "CartoDB Positron": L.tileLayer.provider('CartoDB.Positron'),
             "CartoDB Dark Matter": L.tileLayer.provider("CartoDB.DarkMatter"),
             "ESRI WorldImagery": L.tileLayer.provider("Esri.WorldImagery"),
             "Google Hybrid": L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
