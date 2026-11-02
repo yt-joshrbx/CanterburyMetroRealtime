@@ -8,8 +8,9 @@ module.exports = async function handler(req, res) {
   }
 
   const targetUrl = `https://apis.metroinfo.co.nz${path}`;
+  const subscriptionKey = process.env.METROINFO_API_KEY;
 
-  if (!process.env.METROINFO_API_KEY) {
+  if (!subscriptionKey) {
     return res.status(500).json({ error: 'METROINFO_API_KEY is not configured.' });
   }
 
@@ -17,7 +18,7 @@ module.exports = async function handler(req, res) {
     const upstreamResponse = await fetch(targetUrl, {
       method: 'GET',
       headers: {
-        'x-api-key': process.env.METROINFO_API_KEY,
+        'Ocp-Apim-Subscription-Key': subscriptionKey,
         'Cache-Control': 'no-cache',
         'Accept': 'application/octet-stream'
       }
