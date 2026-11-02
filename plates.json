@@ -2,41 +2,25 @@
   { "plate": "HKF947", "fleet_number": "G1021" },
   { "plate": "HLB844", "fleet_number": "G1022" }
   { "plate": "HLW802", "fleet_number": "G1023" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
-  { "plate": "", "fleet_number": "" }
+  { "plate": "HLB891", "fleet_number": "G1024" }
+  { "plate": "HLW776", "fleet_number": "G1025" }
+  { "plate": "HQR255", "fleet_number": "G1026" }
+  { "plate": "HQR219", "fleet_number": "G1027" }
+  { "plate": "JQU585", "fleet_number": "G1031" }
+  { "plate": "JRN430", "fleet_number": "G1032" }
+  { "plate": "JGB255", "fleet_number": "G1033" }
+  { "plate": "JGB278", "fleet_number": "G1034" }
+  { "plate": "KBA671", "fleet_number": "G1035" }
+  { "plate": "JEY358", "fleet_number": "G1036" }
+  { "plate": "LCJ164", "fleet_number": "G1037" }
+  { "plate": "JKA879", "fleet_number": "G1045" }
+  { "plate": "JML208", "fleet_number": "G1046" }
+  { "plate": "JML207", "fleet_number": "G1047" }
+  { "plate": "JML206", "fleet_number": "G1048" }
+  { "plate": "JNZ63", "fleet_number": "G1049" }
   { "plate": "", "fleet_number": "" }
 ]
-G1024	HLB891	MAN 16.250	7ABA801039AD01532	Designline Enviroline		2014	B37DW	Metro
-G1025	HLW776	MAN 16.250	7ABA801040AD01533	Designline Enviroline		2014	B37DW	Metro
-G1026	HQR255	MAN 16.250	7ABA801047AD01540	Designline Enviroline		2014	B41DW	Metro
-G1027	HQR219	MAN 16.250	7ABA801048AD01541	Designline Enviroline		2014	B41DW	Metro
-G1031	JQU585	MAN 16.250	7ABA801092AD01559	Designline Enviroline		2015	B43DW	Metro
-G1032	JRN430	MAN 16.250	7ABA801093AD01560	Designline Enviroline		2016	B43DW	Metro
-G1033	JGB255	MAN 16.250	7ABA801055AD01554	Designline Enviroline		2015	B43DW	Metro
-G1034	JGB278	MAN 16.250	7ABA801056AD01555	Designline Enviroline		2015	B43DW	Metro
-G1035	KBA671	MAN 16.250	7ABA801109AD01582	GBV NZ Enviroline		2016	B36DW	Metro
-G1036	JEY358	MAN 16.250	7ABA801053AD01552	Designline Enviroline		2015	B43DW	Metro
-G1037	LCJ164	MAN 16.250	7ABA801054AD01553	Designline Enviroline		2015	B43DW	Metro
-ex JGB223.
-G1045	JKA879	Volvo B7RLE	YV3R6R620GA174059	Designline Enviroline		2015	B43DW	Metro
-G1046	JML208	Volvo B7RLE	YV3R6R629GA174058	Designline Enviroline		2015	B43DW	Metro
-G1047	JML207	Volvo B7RLE	YV3R6R621FA174071	Designline Enviroline		2016	B43DW	Old Orbiter
-G1048	JML206	Volvo B7RLE	YV3R6R625FA174106	Designline Enviroline		2016	B43DW	OrbiterTaonga
-G1049	JNZ63	Volvo B7RLE	YV3R6R626FA174499	Designline Enviroline		2016	B43DW	Old Orbiter
+
 G1050	JPK246	Volvo B7RLE	YV3R6R629FA174500	Designline Enviroline		2016	B43DW	OrbiterTaonga
 G1052	JUG112	MAN 18.290	7ABA940023AD01575	Designline Enviroline		2016	B45DW	Metro
 G1053	JUG120	MAN 18.290	7ABA940024AD01576	Designline Enviroline		2016	B45DW	Metro
