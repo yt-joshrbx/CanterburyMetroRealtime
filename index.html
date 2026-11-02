@@ -46,6 +46,57 @@
         // Configuration - MetroInfo API credentials
         var API_KEY = '70bec02cbae84bbfa29b4e906a2035d4';
         var METROINFO_BASE_URL = 'https://apidevelopers.metroinfo.co.nz';
+        var API_HEADERS = {
+            'x-api-key': API_KEY,
+            'Cache-Control': 'no-cache'
+        };
+
+        async function fetchJsonFromEndpoint(url, label) {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: API_HEADERS
+            });
+
+            if (!response.ok) {
+                throw new Error(label + ' request failed: ' + response.status + ' ' + response.statusText);
+            }
+
+            const contentType = (response.headers.get('content-type') || '').toLowerCase();
+            const rawText = await response.text();
+
+            if (!rawText) {
+                throw new Error(label + ' returned an empty response.');
+            }
+
+            if (contentType.includes('application/json') || rawText.trim().startsWith('{') || rawText.trim().startsWith('[')) {
+                try {
+                    return JSON.parse(rawText);
+                } catch (err) {
+                    throw new Error(label + ' returned invalid JSON: ' + err.message);
+                }
+            }
+
+            throw new Error(label + ' returned a binary/protobuf response. Use a JSON endpoint or decode the protobuf feed.');
+        }
+
+        async function fetchVehiclePositions() {
+            const endpoints = [
+                METROINFO_BASE_URL + '/gtfs-realtime/vehicle-positions',
+                METROINFO_BASE_URL + '/gtfs-realtime/vehicle-positions.pb'
+            ];
+
+            let lastError = null;
+            for (const endpoint of endpoints) {
+                try {
+                    return await fetchJsonFromEndpoint(endpoint, 'Vehicle positions');
+                } catch (err) {
+                    lastError = err;
+                    console.warn('Failed to load vehicle data from ' + endpoint + ':', err);
+                }
+            }
+
+            throw lastError || new Error('Unable to load vehicle positions.');
+        }
 
         // Christchurch center coordinates
         var map = L.map('map', {
@@ -68,7 +119,6 @@
             }),
             "Wikimedia": L.tileLayer.provider("Wikimedia")
         };
-
 
         map.attributionControl.addAttribution("© <a href='https://metroinfo.co.nz/'>MetroInfo</a>");
 
@@ -240,18 +290,12 @@
         }
 
         // Load routes from MetroInfo GTFS Static API
-        function loadRoutes() {
+        async function loadRoutes() {
             map.spin(true);
-            fetch(METROINFO_BASE_URL + '/gtfs-static/routes', {
-                method: 'GET',
-                headers: {
-                    'x-api-key': API_KEY,
-                    'Cache-Control': 'no-cache'
-                }
-            })
-            .then(response => response.json())
-            .then(response => {
+            try {
+                const response = await fetchJsonFromEndpoint(METROINFO_BASE_URL + '/gtfs-static/routes', 'Routes');
                 map.spin(false);
+
                 if (response.error || !response.data) {
                     console.error(response);
                     $("#status").text("Error getting routes: " + (response.error || "Unknown error"));
@@ -262,16 +306,15 @@
                     console.log("Loaded " + Object.keys(routes).length + " routes");
                 }
                 loop();
-            })
-            .catch(err => {
+            } catch (err) {
                 map.spin(false);
                 console.error(err);
-                $("#status").text("Error loading routes.");
+                $("#status").text("Error loading routes: " + err.message);
                 loop();
-            });
+            }
         }
 
-        function loop() {
+        async function loop() {
             if (hasLoaded && !document.hasFocus()) {
                 console.log("tab unfocused, skipping");
                 return;
@@ -279,16 +322,8 @@
             hasLoaded = true;
 
             map.spin(true);
-            // Using GTFS Realtime Vehicle Positions endpoint
-            fetch(METROINFO_BASE_URL + '/gtfs-realtime/vehicle-positions.pb', {
-                method: 'GET',
-                headers: {
-                    'x-api-key': API_KEY,
-                    'Cache-Control': 'no-cache'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
+            try {
+                const data = await fetchVehiclePositions();
                 map.spin(false);
 
                 if (!data || !data.entity || !Array.isArray(data.entity)) {
@@ -319,7 +354,6 @@
                         }
                         marker.options.desc = desc;
                     } else {
-                        // Determine icon based on route type
                         var icon = otherIcon;
                         if (vehicle.trip && vehicle.trip.route_id) {
                             var r = routes[vehicle.trip.route_id];
@@ -345,10 +379,7 @@
 
                             fetch(METROINFO_BASE_URL + '/gtfs-static/trip-updates.pb/' + tripId, {
                                 method: 'GET',
-                                headers: {
-                                    'x-api-key': API_KEY,
-                                    'Cache-Control': 'no-cache'
-                                }
+                                headers: API_HEADERS
                             })
                             .then(resp => resp.json())
                             .then(respJson => {
@@ -396,12 +427,11 @@
                     marker.occupancy_status = occupancyStatus;
                     updateMarkerColour(marker);
                 }
-            })
-            .catch(err => {
+            } catch (err) {
                 map.spin(false);
                 console.error(err);
-                $("#status").text("Error loading vehicle locations.");
-            });
+                $("#status").text("Error loading vehicle locations: " + err.message);
+            }
         }
 
         // Initial load
