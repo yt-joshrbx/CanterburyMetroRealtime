@@ -1,11 +1,13 @@
-export default async function handler(req, res) {
+const GtfsRealtimeBindings = require('gtfs-realtime-bindings');
+
+module.exports = async function handler(req, res) {
   const { path } = req.query;
 
   if (!path || typeof path !== 'string') {
-    return res.status(400).json({ error: 'Missing or invalid path parameter.' });
+    return res.status(400).json({ error: 'Missing path parameter.' });
   }
 
-  const targetUrl = `https://apidevelopers.metroinfo.co.nz${path}`;
+  const targetUrl = `https://apis.metroinfo.co.nz${path}`;
 
   if (!process.env.METROINFO_API_KEY) {
     return res.status(500).json({ error: 'METROINFO_API_KEY is not configured.' });
@@ -16,17 +18,33 @@ export default async function handler(req, res) {
       method: 'GET',
       headers: {
         'x-api-key': process.env.METROINFO_API_KEY,
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
+        'Accept': 'application/octet-stream'
       }
     });
 
-    const contentType = upstreamResponse.headers.get('content-type') || 'application/json';
-    const body = await upstreamResponse.text();
+    if (!upstreamResponse.ok) {
+      const text = await upstreamResponse.text();
+      return res.status(upstreamResponse.status).send(text);
+    }
 
-    res.setHeader('Content-Type', contentType);
-    res.status(upstreamResponse.status).send(body);
+    const buffer = Buffer.from(await upstreamResponse.arrayBuffer());
+
+    if (path.endsWith('.pb')) {
+      try {
+        const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(buffer);
+        return res.status(200).json(feed.toJSON ? feed.toJSON() : feed);
+      } catch (decodeErr) {
+        console.error('protobuf decode failed', decodeErr);
+        return res.status(500).json({ error: 'protobuf decode failed', details: decodeErr.message });
+      }
+    }
+
+    const text = buffer.toString('utf-8');
+    res.setHeader('Content-Type', upstreamResponse.headers.get('content-type') || 'application/json');
+    return res.status(200).send(text);
   } catch (err) {
     console.error('MetroInfo proxy error:', err);
-    res.status(500).json({ error: 'Failed to fetch MetroInfo data.', details: err.message });
+    return res.status(500).json({ error: 'Failed to fetch MetroInfo data', details: err.message });
   }
-}
+};
