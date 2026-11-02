@@ -43,22 +43,24 @@
     <h1 id="title">Welcome to the MetroInfo Transit Realtime Map!</h1>
     <div id="map"></div>
     <script>
-        // Configuration - MetroInfo API credentials
-        var API_KEY = '70bec02cbae84bbfa29b4e906a2035d4';
-        var METROINFO_BASE_URL = 'https://apidevelopers.metroinfo.co.nz';
-        var API_HEADERS = {
-            'x-api-key': API_KEY,
-            'Cache-Control': 'no-cache'
-        };
+        // Configuration - API key stays server-side in Vercel, not in the browser.
+        var API_PROXY_BASE = '/api/metroinfo?path=';
 
-        async function fetchJsonFromEndpoint(url, label) {
-            const response = await fetch(url, {
+        function metroProxyPath(path) {
+            return API_PROXY_BASE + encodeURIComponent(path);
+        }
+
+        async function fetchJsonFromEndpoint(path, label) {
+            const response = await fetch(metroProxyPath(path), {
                 method: 'GET',
-                headers: API_HEADERS
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
             });
 
             if (!response.ok) {
-                throw new Error(label + ' request failed: ' + response.status + ' ' + response.statusText);
+                const text = await response.text();
+                throw new Error(label + ' request failed: ' + response.status + ' ' + response.statusText + ' - ' + text);
             }
 
             const contentType = (response.headers.get('content-type') || '').toLowerCase();
@@ -76,13 +78,13 @@
                 }
             }
 
-            throw new Error(label + ' returned a binary/protobuf response. Use a JSON endpoint or decode the protobuf feed.');
+            throw new Error(label + ' returned a non-JSON response.');
         }
 
         async function fetchVehiclePositions() {
             const endpoints = [
-                METROINFO_BASE_URL + '/gtfs-realtime/vehicle-positions',
-                METROINFO_BASE_URL + '/gtfs-realtime/vehicle-positions.pb'
+                '/gtfs-realtime/vehicle-positions',
+                '/gtfs-realtime/vehicle-positions.pb'
             ];
 
             let lastError = null;
@@ -122,38 +124,19 @@
 
         map.attributionControl.addAttribution("© <a href='https://metroinfo.co.nz/'>MetroInfo</a>");
 
-        // Define custom icons for different transport modes
-        var busIcon = L.icon({
-            iconUrl: 'metro-bus.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16],
-            popupAnchor: [0, -16],
-            className: 'transit-marker bus-marker'
-        });
+        var markerIconDefaults = {
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [0, -28],
+            shadowSize: [41, 41]
+        };
 
-        var tramIcon = L.icon({
-            iconUrl: 'metro-tram.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16],
-            popupAnchor: [0, -16],
-            className: 'transit-marker tram-marker'
-        });
-
-        var coachIcon = L.icon({
-            iconUrl: 'metro-coach-icon.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16],
-            popupAnchor: [0, -16],
-            className: 'transit-marker coach-marker'
-        });
-
-        var otherIcon = L.icon({
-            iconUrl: 'unknown-icon.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16],
-            popupAnchor: [0, -16],
-            className: 'transit-marker other-marker'
-        });
+        var busIcon = L.icon(Object.assign({}, markerIconDefaults, { iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-red.png' }));
+        var tramIcon = L.icon(Object.assign({}, markerIconDefaults, { iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-red.png' }));
+        var coachIcon = L.icon(Object.assign({}, markerIconDefaults, { iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-green.png' }));
+        var otherIcon = L.icon(markerIconDefaults);
 
         var layers = {
             '3': L.layerGroup().addTo(map),    // Bus
@@ -242,7 +225,6 @@
             } else if (window.colourscheme == "Speed") {
                 color = speedColors(marker.speed);
             }
-            // Apply color filter to SVG icons
             if (marker._icon && color !== "black") {
                 marker._icon.style.filter = "hue-rotate(" + Math.random() * 360 + "deg)";
             }
@@ -250,9 +232,9 @@
 
         function getIconForRouteType(routeType) {
             switch(routeType) {
-                case 1: return tramIcon;       // Tram
-                case 2: return coachIcon;      // Coach
-                case 3: return busIcon;        // Bus
+                case 1: return tramIcon;
+                case 2: return coachIcon;
+                case 3: return busIcon;
                 default: return otherIcon;
             }
         }
@@ -289,11 +271,10 @@
             return "Unknown";
         }
 
-        // Load routes from MetroInfo GTFS Static API
         async function loadRoutes() {
             map.spin(true);
             try {
-                const response = await fetchJsonFromEndpoint(METROINFO_BASE_URL + '/gtfs-static/routes', 'Routes');
+                const response = await fetchJsonFromEndpoint('/gtfs-static/routes', 'Routes');
                 map.spin(false);
 
                 if (response.error || !response.data) {
@@ -371,31 +352,6 @@
                         marker._entityId = id;
                         marker.route_type = routeType;
                         markers[id] = marker;
-
-                        marker.on("tooltipopen", function (e) {
-                            var target = e.target;
-                            if (!target || !target.trip || !target.trip.trip_id) return;
-                            var tripId = target.trip.trip_id;
-
-                            fetch(METROINFO_BASE_URL + '/gtfs-static/trip-updates.pb/' + tripId, {
-                                method: 'GET',
-                                headers: API_HEADERS
-                            })
-                            .then(resp => resp.json())
-                            .then(respJson => {
-                                if (respJson.error) {
-                                    console.error(respJson.error);
-                                    $("#status").text("Error getting trip: " + respJson.error);
-                                } else if (respJson.data) {
-                                    var attrs = respJson.data;
-                                    var eid = safeId(target._entityId);
-                                    $("#headsign-" + eid).text(attrs.trip_headsign || "");
-                                    $("#bike_allowed-" + eid).text(bikeText(attrs.bikes_allowed));
-                                    $("#accessibility-" + eid).text(accessibilityText(attrs.wheelchair_accessible));
-                                }
-                            })
-                            .catch(err => console.error(err));
-                        });
                     }
 
                     if (vehicle.trip && vehicle.trip.route_id) {
