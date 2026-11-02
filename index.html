@@ -270,6 +270,12 @@
             return "Unknown";
         }
 
+        function removeMarkerFromLayer(marker) {
+            if (marker && marker._map) {
+                marker.remove();
+            }
+        }
+
         async function loadRoutes() {
             // MetroInfo static route metadata is not exposed at the guessed legacy paths.
             // Keep the map running with the realtime vehicle feed only until a valid static route feed is confirmed.
@@ -295,12 +301,16 @@
                     return;
                 }
 
+                var activeIds = {};
+
                 for (var i in data.entity) {
                     if (!data.entity.hasOwnProperty(i)) continue;
                     var ent = data.entity[i];
                     var id = ent.id;
                     var vehicle = ent.vehicle;
                     if (!vehicle || !vehicle.position) continue;
+
+                    activeIds[String(id)] = true;
 
                     var position = vehicle.position;
                     var label = vehicle.vehicle && vehicle.vehicle.label ? vehicle.vehicle.label : ("Vehicle " + id);
@@ -311,12 +321,7 @@
 
                     var sid = safeId(id);
 
-                    if (marker) {
-                        if (typeof position.latitude === "number" && typeof position.longitude === "number") {
-                            marker.setLatLng([position.latitude, position.longitude]);
-                        }
-                        marker.options.desc = desc;
-                    } else {
+                    if (!marker) {
                         var icon = otherIcon;
                         if (vehicle.trip && vehicle.trip.route_id) {
                             var r = routes[vehicle.trip.route_id];
@@ -334,6 +339,11 @@
                         marker._entityId = id;
                         marker.route_type = routeType;
                         markers[id] = marker;
+                    } else {
+                        if (typeof position.latitude === "number" && typeof position.longitude === "number") {
+                            marker.setLatLng([position.latitude, position.longitude]);
+                        }
+                        marker.options.desc = desc;
                     }
 
                     if (vehicle.trip && vehicle.trip.route_id) {
@@ -350,7 +360,11 @@
                         }
                     }
 
+                    if (marker._map) {
+                        removeMarkerFromLayer(marker);
+                    }
                     marker.addTo(layer);
+
                     marker.speed = Math.round(position.speed || 0);
 
                     var occupancyStatus = vehicle.occupancy_status || 0;
@@ -364,6 +378,15 @@
                     marker.bindTooltip(tooltipHtml);
                     marker.occupancy_status = occupancyStatus;
                     updateMarkerColour(marker);
+                }
+
+                // Remove stale markers no longer returned by the feed.
+                for (var existingId in markers) {
+                    if (!markers.hasOwnProperty(existingId)) continue;
+                    if (!activeIds.hasOwnProperty(String(existingId))) {
+                        removeMarkerFromLayer(markers[existingId]);
+                        delete markers[existingId];
+                    }
                 }
             } catch (err) {
                 map.spin(false);
