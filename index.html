@@ -54,18 +54,18 @@
             worldCopyJump: true
         });
 
-        var positron = L.tileLayer.provider('CartoDB.Positron').addTo(map);
+        var positron = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+            }),
 
         var baseMaps = {
             "OSM": L.tileLayer.provider("OpenStreetMap.Mapnik"),
             "OSM Grayscale": L.tileLayer.provider("OpenStreetMap.BlackAndWhite"),
-            "CartoDB Positron": positron,
+            "CartoDB Positron": L.tileLayer.provider('CartoDB.Positron').addTo(map);
             "CartoDB Dark Matter": L.tileLayer.provider("CartoDB.DarkMatter"),
             "ESRI WorldImagery": L.tileLayer.provider("Esri.WorldImagery"),
-            "Google Hybrid": L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-            }),
+            "Google Hybrid": positron,
             "Wikimedia": L.tileLayer.provider("Wikimedia")
         };
 
@@ -73,7 +73,7 @@
 
         // Define custom icons for different transport modes
         var busIcon = L.icon({
-            iconUrl: 'metro-bus-icon.png',
+            iconUrl: 'metro-bus.png',
             iconSize: [32, 32],
             iconAnchor: [16, 16],
             popupAnchor: [0, -16],
