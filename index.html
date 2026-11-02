@@ -83,8 +83,7 @@
 
         async function fetchVehiclePositions() {
             const endpoints = [
-                '/gtfs-realtime/vehicle-positions',
-                '/gtfs-realtime/vehicle-positions.pb'
+                '/rti/gtfsrt/v1/vehicle-positions.pb'
             ];
 
             let lastError = null;
@@ -272,27 +271,10 @@
         }
 
         async function loadRoutes() {
-            map.spin(true);
-            try {
-                const response = await fetchJsonFromEndpoint('/gtfs-static/routes', 'Routes');
-                map.spin(false);
-
-                if (response.error || !response.data) {
-                    console.error(response);
-                    $("#status").text("Error getting routes: " + (response.error || "Unknown error"));
-                } else {
-                    for (var r of response.data) {
-                        routes[r.route_id] = r;
-                    }
-                    console.log("Loaded " + Object.keys(routes).length + " routes");
-                }
-                loop();
-            } catch (err) {
-                map.spin(false);
-                console.error(err);
-                $("#status").text("Error loading routes: " + err.message);
-                loop();
-            }
+            // MetroInfo static route metadata is not exposed at the guessed legacy paths.
+            // Keep the map running with the realtime vehicle feed only until a valid static route feed is confirmed.
+            console.warn('No static route feed configured for this MetroInfo API. Continuing with realtime vehicle positions only.');
+            loop();
         }
 
         async function loop() {
