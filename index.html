@@ -123,19 +123,37 @@
 
         map.attributionControl.addAttribution("© <a href='https://metroinfo.co.nz/'>MetroInfo</a>");
 
-        var markerIconDefaults = {
-            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [0, -28],
-            shadowSize: [41, 41]
-        };
+        var busIcon = L.icon({
+            iconUrl: 'metro-bus.png',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -16],
+            className: 'transit-marker bus-marker'
+        });
 
-        var busIcon = L.icon(Object.assign({}, markerIconDefaults, { iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-red.png' }));
-        var tramIcon = L.icon(Object.assign({}, markerIconDefaults, { iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-red.png' }));
-        var coachIcon = L.icon(Object.assign({}, markerIconDefaults, { iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-green.png' }));
-        var otherIcon = L.icon(markerIconDefaults);
+        var tramIcon = L.icon({
+            iconUrl: 'metro-tram.png',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -16],
+            className: 'transit-marker tram-marker'
+        });
+
+        var coachIcon = L.icon({
+            iconUrl: 'metro-bus.png',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -16],
+            className: 'transit-marker coach-marker'
+        });
+
+        var otherIcon = L.icon({
+            iconUrl: 'unknown-icon.png',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -16],
+            className: 'transit-marker other-marker'
+        });
 
         var layers = {
             '3': L.layerGroup().addTo(map),    // Bus
