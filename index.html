@@ -37,10 +37,48 @@
             background-color: white; padding: 15px; color: black;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); border-radius: 5px;
         }
+        #alerts {
+            position: absolute;
+            right: 20px;
+            top: 80px;
+            z-index: 1200;
+            width: min(360px, calc(100% - 40px));
+            max-height: 40vh;
+            overflow: auto;
+            background: rgba(0,0,0,0.72);
+            color: white;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-family: Arial, Helvetica, sans-serif;
+            box-sizing: border-box;
+        }
+        #alerts h3 {
+            margin: 0 0 8px 0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .alert-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-left: 3px solid #ffb703;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+        .alert-item strong {
+            display: block;
+            margin-bottom: 4px;
+        }
     </style>
 </head>
 <body>
     <h1 id="title">Welcome to the MetroInfo Transit Realtime Map!</h1>
+    <div id="alerts">
+        <h3>Service Alerts</h3>
+        <div id="alerts-content">Loading…</div>
+    </div>
     <div id="map"></div>
     <script>
         // Configuration - API key stays server-side in Vercel, not in the browser.
@@ -97,6 +135,62 @@
             }
 
             throw lastError || new Error('Unable to load vehicle positions.');
+        }
+
+        async function fetchServiceAlerts() {
+            const endpoints = [
+                '/rti/gtfsrt/v1/service-alerts.pb'
+            ];
+
+            let lastError = null;
+            for (const endpoint of endpoints) {
+                try {
+                    return await fetchJsonFromEndpoint(endpoint, 'Service alerts');
+                } catch (err) {
+                    lastError = err;
+                    console.warn('Failed to load service alerts from ' + endpoint + ':', err);
+                }
+            }
+
+            throw lastError || new Error('Unable to load service alerts.');
+        }
+
+        function renderAlerts(data) {
+            const container = document.getElementById('alerts-content');
+            if (!data || !data.entity || !Array.isArray(data.entity)) {
+                container.textContent = 'No active alerts.';
+                return;
+            }
+
+            const items = data.entity
+                .filter(entity => entity.alert)
+                .map(entity => {
+                    const alert = entity.alert;
+                    let title = 'Service alert';
+                    let summary = 'No details provided.';
+
+                    if (alert.header_text && alert.header_text.translation && alert.header_text.translation.length) {
+                        title = alert.header_text.translation[0].text || title;
+                    }
+
+                    if (alert.description_text && alert.description_text.translation && alert.description_text.translation.length) {
+                        summary = alert.description_text.translation[0].text || summary;
+                    }
+
+                    return '<div class="alert-item"><strong>' + title + '</strong>' + summary + '</div>';
+                });
+
+            container.innerHTML = items.length ? items.join('') : 'No active alerts.';
+        }
+
+        async function loadServiceAlerts() {
+            try {
+                const data = await fetchServiceAlerts();
+                renderAlerts(data);
+            } catch (err) {
+                document.getElementById('alerts-content').textContent = 'Unable to fetch alerts.';
+                console.error(err);
+            }
         }
 
         // Christchurch center coordinates
@@ -257,7 +351,6 @@
         }
 
         var markers = {};
-        var busServices = {};
         var occupancy = ["empty", "many seats available", "few seats available", "standing room only", "limited standing room", "full", "not accepting passengers"];
         var occupancyColors = ["#4575b4", "#91bfdb", "#e0f3f8", "#fee090", "#fc8d59", "#d73027", "black"];
         var speedColors = chroma.scale([chroma.hsv(270, 1, 1), chroma.hsv(180, 1, 1), chroma.hsv(90, 1, 1), chroma.hsv(0, 1, 1)]).mode("hsv").domain([0, 100]);
@@ -295,10 +388,9 @@
         }
 
         async function loadRoutes() {
-            // MetroInfo static route metadata is not exposed at the guessed legacy paths.
-            // Keep the map running with the realtime vehicle feed only until a valid static route feed is confirmed.
             console.warn('No static route feed configured for this MetroInfo API. Continuing with realtime vehicle positions only.');
             loop();
+            loadServiceAlerts();
         }
 
         async function loop() {
@@ -418,6 +510,7 @@
         
         // Update every 10 seconds
         setInterval(loop, 10000);
+        setInterval(loadServiceAlerts, 30000);
     </script>
 </body>
 </html>
